@@ -61,7 +61,7 @@ const store = {
     }
     fs.appendFileSync(nodeFile,
         serialization.serialize(object), {encoding: 'utf8', flag: 'w'});
-    callback(null, null);
+    callback(null, object);
   },
 
   get: (key, callback) => {

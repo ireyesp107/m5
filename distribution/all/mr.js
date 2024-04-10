@@ -37,12 +37,9 @@ const mr = function(config) {
                 if (v.hasOwnProperty(key)) {
                   if (Array.isArray(v[key])) {
                     for (let i = 0; i < v[key].length; i++) {
-                      // const temp = Object.keys(v[key][i]);
                       const word = Object.keys(v[key][i])[0];
-                      // console.log(v[key][i][word])
                       const count =v[key][i][word];
-                      // console.log(word)
-                      // const count = v[key][i].value[word].value
+
                       if (!foundPairs.has(word)) {
                         foundPairs.set(word, []);
                       }

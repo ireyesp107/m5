@@ -596,7 +596,7 @@ test('(0.5 pts) local.store.del(jcarb)', (done) => {
 });
 
 test('(0.5 pts) local.store.put(jcarb)', (done) => {
-  const user = {first: 'Josiah', last: 'Carberry'};
+  const user = [{first: 'Josiah', last: 'Carberry'}];
   const key = 'jcarbsp';
 
   distribution.local.store.put(user, key, (e, v) => {
