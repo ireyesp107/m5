@@ -28,7 +28,6 @@ const mr = function(config) {
         
       const shufflePhase = function(obj, config, gid, serviceName, cb) {
         global.distribution.local.store.get({key:"mapPhaseMap", gid: gid}, (e,v)=>{
-          console.log("JOSUE "+global.distribution.util.serialize(v))
 
           const foundPairs = new Map();
           for (let key in v) {
