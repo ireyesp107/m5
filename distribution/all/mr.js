@@ -8,115 +8,119 @@ const mr = function(config) {
   return {
     exec: (configuration, callback) => {
       const mapPhase = function(obj, config, gid, serviceName, cb) {
-        global.distribution.local.store.get({key: null, gid: gid}, (e, storeKeys) => {
-          const keysLength = storeKeys.length
-          let arrayObjs = []
-          let mapObjs = new Map();
-           storeKeys.forEach((localKey) => {
-            global.distribution.local.store.get({key: localKey, gid: gid},(e,localValue) =>{
-              mapObjs[localKey]=config.map(localKey, localValue)
-              arrayObjs.push(config.map(localKey, localValue))
-              if(keysLength === arrayObjs.length){
-                global.distribution.local.store.put(mapObjs, {key:"mapPhaseMap", gid: gid}, (e,v)=>{
-                  cb(null,v)
-                })
-              }
-            })
-          })
-        })
-      }
-        
-      const shufflePhase = function(obj, config, gid, serviceName, cb) {
-        global.distribution.local.store.get({key:"mapPhaseMap", gid: gid}, (e,v)=>{
-
-          const foundPairs = new Map();
-          for (let key in v) {
-            if (v.hasOwnProperty(key)) {
-
-              if (Array.isArray(v[key])) {
-              for (let i = 0; i < v[key].length; i++) {
-                //const temp = Object.keys(v[key][i]);
-                const word = Object.keys(v[key][i])[0]
-                //console.log(v[key][i][word])
-                const count =v[key][i][word]
-                //console.log(word)
-                //const count = v[key][i].value[word].value
-                if(!foundPairs.has(word)){
-                foundPairs.set(word,[])
-                }
-                foundPairs.get(word).push(count);
-              }
-            }
-            else{
-              const mykey = Object.keys(v[key])[0]
-              const myValue =v[key][mykey]
-              if(!foundPairs.has(mykey)){
-                foundPairs.set(mykey,[])
-                }
-                foundPairs.get(mykey).push(myValue);
-
-            }
-          }
-        }
-        console.log(foundPairs)
-          // v.forEach((tempObject)=>{
-          //   console.log("MADE IT IN HERE")
-          //   let foundKeys = Object.keys(tempObject)[0]
-          //   if(!foundPairs.has(foundKeys)){
-          //     foundPairs.set(foundKeys,[])
-          //   }
-          //   foundPairs.get(foundKeys).push(tempObject[foundKeys]);
-
-          // })
-          let numGroupPairs = foundPairs.size;
-          let counter = 0;
-
-          for(const groupKey of foundPairs.keys()){
-            
-            let currentGroup = foundPairs.get(groupKey);
-            let newGroupKey = groupKey+serviceName
-              global.distribution[gid].store.append(currentGroup, newGroupKey, (e,v) =>{
-                counter +=1;
-                if(counter === numGroupPairs){
-                  cb(null, v)
-                }
-          })
-        
-          }
-        })
+        global.distribution.local.store.get({key: null, gid: gid},
+            (e, storeKeys) => {
+              const keysLength = storeKeys.length;
+              let arrayObjs = [];
+              let mapObjs = new Map();
+              storeKeys.forEach((localKey) => {
+                global.distribution.local.store.get({key: localKey, gid: gid},
+                    (e, localValue) =>{
+                      mapObjs[localKey]=config.map(localKey, localValue);
+                      arrayObjs.push(config.map(localKey, localValue));
+                      if (keysLength === arrayObjs.length) {
+                        global.distribution.local.store.put(mapObjs,
+                            {key: 'mapPhaseMap', gid: gid}, (e, v)=>{
+                              cb(null, v);
+                            });
+                      }
+                    });
+              });
+            });
       };
-    
+
+      const shufflePhase = function(obj, config, gid, serviceName, cb) {
+        global.distribution.local.store.get({key: 'mapPhaseMap', gid: gid},
+            (e, v)=>{
+              const foundPairs = new Map();
+              for (let key in v) {
+                if (v.hasOwnProperty(key)) {
+                  if (Array.isArray(v[key])) {
+                    for (let i = 0; i < v[key].length; i++) {
+                      // const temp = Object.keys(v[key][i]);
+                      const word = Object.keys(v[key][i])[0];
+                      // console.log(v[key][i][word])
+                      const count =v[key][i][word];
+                      // console.log(word)
+                      // const count = v[key][i].value[word].value
+                      if (!foundPairs.has(word)) {
+                        foundPairs.set(word, []);
+                      }
+                      foundPairs.get(word).push(count);
+                    }
+                  } else {
+                    const mykey = Object.keys(v[key])[0];
+                    const myValue =v[key][mykey];
+                    if (!foundPairs.has(mykey)) {
+                      foundPairs.set(mykey, []);
+                    }
+                    foundPairs.get(mykey).push(myValue);
+                  }
+                }
+              }
+              let numGroupPairs = foundPairs.size;
+              let counter = 0;
+
+              for (const groupKey of foundPairs.keys()) {
+                let currentGroup = foundPairs.get(groupKey);
+                let newGroupKey = groupKey+serviceName;
+                global.distribution[gid].store.append(currentGroup, newGroupKey,
+                    (e, v) =>{
+                      counter +=1;
+                      if (counter === numGroupPairs) {
+                        cb(null, v);
+                      }
+                    });
+              }
+            });
+      };
+
       // reduce phase
       const reducePhase = function(obj, config, gid, serviceName, cb) {
-        global.distribution.local.store.get({key: null, gid: gid}, (e,v) =>{
+        global.distribution.local.store.get({key: null, gid: gid}, (e, v) =>{
           const keysInPossession = [];
-          for(let key of v){
-            if(key.endsWith(serviceName)){
-              keysInPossession.push(key)
+          for (let key of v) {
+            if (key.endsWith(serviceName)) {
+              keysInPossession.push(key);
             }
           }
-          const reducePairs =[]
-          if(keysInPossession.length>0){
+          const reducePairs =[];
+          if (keysInPossession.length>0) {
             keysInPossession.forEach((foundKey)=>{
-              global.distribution.local.store.get({key: foundKey, gid: gid}, (e,values) =>{
-                reducePairs.push(config.reduce(foundKey.slice(0, -serviceName.length), values));
-                if(reducePairs.length === keysInPossession.length){
-                  cb(null, reducePairs)
-                }
-              })
-            })
+              global.distribution.local.store.get({key: foundKey, gid: gid},
+                  (e, values) =>{
+                    reducePairs.push(
+                        config.reduce(foundKey.slice(0, -serviceName.length),
+                            values));
+                    if (reducePairs.length === keysInPossession.length) {
+                      cb(null, reducePairs);
+                    }
+                  });
+            });
+          } else {
+            cb(null, keysInPossession);
           }
-          else{
-            cb(null, keysInPossession)
-          }
-
-        })
+        });
+      };
+      const deregisterFunc = function(serviceName) {
+        local.mr_routes.deregister(serviceName,
+            (e, v) => {
+              remote = {service: 'mr_routes',
+                method: 'deregister'};
+              global.distribution[context.gid].comm.send(
+                  [serviceName], remote, (e, v) => {
+                    return;
+                  });
+            });
       };
 
-      let serviceName = 'mr-'+utils.id.getID(configuration).substring(0, 10);
-      //configuration.serviceName = serviceName
 
-      let endpointService = {'mapPhase': mapPhase, 'shufflePhase': shufflePhase, 'reducePhase': reducePhase};
+      let serviceName = 'mr-'+utils.id.getID(configuration).substring(0, 10);
+      // configuration.serviceName = serviceName
+
+      let endpointService = {'mapPhase': mapPhase,
+        'shufflePhase': shufflePhase,
+        'reducePhase': reducePhase};
 
       // register the current MR locally
       local.mr_routes.register(endpointService, serviceName, (e, v) => {
@@ -125,36 +129,38 @@ const mr = function(config) {
 
       // add mr_routes to whole node group
       let remote = {service: 'routes', method: 'put'};
-      let mr_routes = global.distribution.local.mr_routes;
-      global.distribution[context.gid].comm.send([mr_routes, 'mr_routes'], remote, (e, v) => {
-        remote = {service: 'mr_routes', method: 'register'};
-        global.distribution[context.gid].comm.send([endpointService, serviceName], remote, (e, v) => {
-          // map phase
-          let keyGetterObj = {key: null, gid: context.gid};
-          remote = {'service': serviceName, 'method': 'mapPhase'};
-          global.distribution[context.gid].comm.send([keyGetterObj, configuration, context.gid, serviceName], remote, (e, v) => {
-            //shuffle phase
-            remote.method = 'shufflePhase';
-            global.distribution[context.gid].comm.send([keyGetterObj, configuration, context.gid, serviceName], remote, (e, v) => {
-              // reduce phase
-              remote.method = 'reducePhase';
-              global.distribution[context.gid].comm.send([keyGetterObj, configuration, context.gid, serviceName], remote, (e, v) => {
-
-                const result = Object.values(v).reduce((acc, val) => acc.concat(val), []);
-                console.log(result)
-                callback(null, result);
-                local.mr_routes.deregister(serviceName, (e, v) => {
-                remote = {service: 'mr_routes', method: 'deregister'};
-                global.distribution[context.gid].comm.send([serviceName], remote, (e, v) => {
-                  return;
+      let mrRoutes = global.distribution.local.mr_routes;
+      global.distribution[context.gid].comm.send([mrRoutes, 'mr_routes'],
+          remote, (e, v) => {
+            remote = {service: 'mr_routes', method: 'register'};
+            global.distribution[context.gid].comm.send(
+                [endpointService, serviceName], remote, (e, v) => {
+                // map phase
+                  let keyObj = {key: null, gid: context.gid};
+                  remote = {'service': serviceName, 'method': 'mapPhase'};
+                  global.distribution[context.gid].comm.send(
+                      [keyObj, configuration, context.gid, serviceName],
+                      remote, (e, v) => {
+                      // shuffle phase
+                        remote.method = 'shufflePhase';
+                        global.distribution[context.gid].comm.send([keyObj,
+                          configuration, context.gid, serviceName],
+                        remote, (e, v) => {
+                        // reduce phase
+                          remote.method = 'reducePhase';
+                          global.distribution[context.gid].comm.send(
+                              [keyObj, configuration, context.gid,
+                                serviceName], remote, (e, v) => {
+                                const result = Object.values(v).reduce(
+                                    (acc, val) =>
+                                      acc.concat(val), []);
+                                callback(null, result);
+                                deregisterFunc(serviceName);
+                              });
+                        });
+                      });
                 });
-
-                });
-               });
-             });
           });
-         });
-       });
     },
   };
 };

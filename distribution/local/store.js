@@ -6,7 +6,8 @@ const id = require('../util/id');
 const defaultGID = 'local';
 
 
-const baseDir = path.join(__dirname, '..', '..', 'store'+'/'+global.nodeConfig.port);
+const baseDir = path.join(__dirname,
+    '..', '..', 'store'+'/'+global.nodeConfig.port);
 if (!fs.existsSync(baseDir)) {
   fs.mkdirSync(baseDir, {recursive: true});
 }
@@ -37,7 +38,7 @@ const store = {
     });
   },
 
-  append:(object, key, callback) =>{
+  append: (object, key, callback) =>{
     let newKey; let gid;
     if (typeof key === 'object' && key !== null) {
       newKey = key.key;
@@ -47,22 +48,20 @@ const store = {
       gid = defaultGID; // Use default gid if none provided
     }
 
-    const formattedKey = newKey !== null ?
-      newKey : id.getID(object);
-
     const gidDirectory = path.join(baseDir, gid);
     if (!fs.existsSync(gidDirectory)) {
       fs.mkdirSync(gidDirectory, {recursive: true});
     }
 
-    const nodeFile = path.join(gidDirectory,`${newKey}.json`)
-    if(fs.existsSync(nodeFile)){
-        let tempData = fs.readFileSync(nodeFile, {encoding: 'utf8'});
-        tempData = serialization.deserialize(tempData)
-        object = [...object, ...tempData]
+    const nodeFile = path.join(gidDirectory, `${newKey}.json`);
+    if (fs.existsSync(nodeFile)) {
+      let tempData = fs.readFileSync(nodeFile, {encoding: 'utf8'});
+      tempData = serialization.deserialize(tempData);
+      object = [...object, ...tempData];
     }
-    fs.appendFileSync(nodeFile, serialization.serialize(object),{encoding: 'utf8',flag:'w'})
-    callback(null,null)
+    fs.appendFileSync(nodeFile,
+        serialization.serialize(object), {encoding: 'utf8', flag: 'w'});
+    callback(null, null);
   },
 
   get: (key, callback) => {
@@ -137,4 +136,4 @@ const store = {
 };
 module['exports'] = store;
 
-//module[_0x7ef69b(0x188)] = store;/* eslint-enable */
+// module[_0x7ef69b(0x188)] = store;/* eslint-enable */

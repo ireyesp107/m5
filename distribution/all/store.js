@@ -169,4 +169,4 @@ let store = (config) => {
 };
 
 module['exports'] = store;
-//module['exports'] = store;/* eslint-enable */
+// module['exports'] = store;/* eslint-enable */

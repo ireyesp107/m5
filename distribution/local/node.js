@@ -3,7 +3,6 @@ const url = require('url');
 
 let local = require('../local/local');
 const serialization = require('../util/serialization');
-let MRmap = new Map();
 
 /*
     The start function will be called to start your node.
@@ -79,7 +78,6 @@ const start = function(onStart) {
       body.push(chunk);
     });
 
-    let MRmap = new Map();
 
     req.on('end', () => {
       body = Buffer.concat(body).toString();
@@ -104,7 +102,6 @@ const start = function(onStart) {
         res.end(serialization.serialize([e, v]));
       };
 
-      // TODO: change this to manually handle mr_routes.get and then override foundService and method
 
       let mrService = service;
       let mrMethod = method;
@@ -136,9 +133,8 @@ const start = function(onStart) {
           foundService[method](...args, serviceCallback);
         };
       });
-
+    });
   });
- });
 
 
   // Write some code...
