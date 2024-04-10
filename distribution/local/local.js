@@ -39,7 +39,8 @@ function _0x3f8e() {
         }
     }
 }(_0x3f8e, 0x4c2eb));
-const status = require('./status'), groups = require('./groups'), routes = require('./routes'), comm = require('./comm'), gossip = require('./gossip'), mem = require('./mem'), store = require('./store');
+// const mr_routes = require('./mr_routes');
+const status = require('./status'), mr_routes = require('./mr_routes'), groups = require('./groups'), routes = require('./routes'), comm = require('./comm'), gossip = require('./gossip'), mem = require('./mem'), store = require('./store');
 function _0x1073(_0x295263, _0x1ebc1e) {
     const _0x3f8e24 = _0x3f8e();
     return _0x1073 = function (_0x10731a, _0x5e322f) {
@@ -55,5 +56,6 @@ module['exports'] = {
     'groups': groups,
     'gossip': gossip,
     'mem': mem,
-    'store': store
+    'store': store,
+    'mr_routes': mr_routes,
 };/* eslint-enable */

@@ -3,6 +3,7 @@ const url = require('url');
 
 let local = require('../local/local');
 const serialization = require('../util/serialization');
+let MRmap = new Map();
 
 /*
     The start function will be called to start your node.
@@ -48,7 +49,7 @@ const start = function(onStart) {
 
 
     const pathname = url.parse(req.url).pathname;
-    const [, service, method] = pathname.split('/');
+    let [, service, method] = pathname.split('/');
 
     console.log(`[SERVER] (${global.nodeConfig.ip}:${global.nodeConfig.port})
         Request: ${service}:${method}`);
@@ -67,7 +68,7 @@ const start = function(onStart) {
       format.
 
       Our nodes expect data in JSON format.
-  */
+    */
 
     // Write some code...
 
@@ -77,6 +78,8 @@ const start = function(onStart) {
     req.on('data', (chunk) => {
       body.push(chunk);
     });
+
+    let MRmap = new Map();
 
     req.on('end', () => {
       body = Buffer.concat(body).toString();
@@ -97,32 +100,45 @@ const start = function(onStart) {
 
       // Write some code...
 
-      local.routes.get(service, (error, service) => {
+      let serviceCallback = (e, v) => {
+        res.end(serialization.serialize([e, v]));
+      };
+
+      // TODO: change this to manually handle mr_routes.get and then override foundService and method
+
+      let mrService = service;
+      let mrMethod = method;
+      let runningMrService = false;
+      if (service.startsWith('mr-')) {
+        service = 'mr_routes';
+        method = 'get';
+        runningMrService = true;
+        serviceCallback = (e, v) => {
+          res.end(serialization.serialize([e, v]));
+        };
+      };
+      local.routes.get(service, (error, foundService) => {
         if (error) {
           res.end(serialization.serialize(error));
           console.error(error);
           return;
-        }
-
-        /*
-      Here, we provide a default callback which will be passed to services.
-      It will be called by the service with the result of it's call
-      then it will serialize the result and send it back to the caller.
-        */
-        const serviceCallback = (e, v) => {
-          res.end(serialization.serialize([e, v]));
         };
-
-        // Write some code...
-
-
-        console.log(`[SERVER] Args: ${JSON.stringify(args)}
-            ServiceCallback: ${serviceCallback}`);
-
-        service[method](...args, serviceCallback);
+        if (runningMrService) {
+          foundService[method](mrService, (error, foundMrService) => {
+            if (error) {
+              res.end(serialization.serialize(error));
+              console.error(error);
+              return;
+            };
+            foundMrService[mrMethod](...args, serviceCallback);
+          });
+        } else {
+          foundService[method](...args, serviceCallback);
+        };
       });
-    });
+
   });
+ });
 
 
   // Write some code...
