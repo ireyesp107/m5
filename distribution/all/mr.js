@@ -10,12 +10,14 @@ const mr = function(config) {
       const mapPhase = function(obj, config, gid, serviceName, cb) {
         global.distribution.local.store.get({key: null, gid: gid}, (e, storeKeys) => {
           const keysLength = storeKeys.length
-          let arrayObjs = [];
+          let arrayObjs = []
+          let mapObjs = new Map();
            storeKeys.forEach((localKey) => {
             global.distribution.local.store.get({key: localKey, gid: gid},(e,localValue) =>{
+              mapObjs[localKey]=config.map(localKey, localValue)
               arrayObjs.push(config.map(localKey, localValue))
               if(keysLength === arrayObjs.length){
-                global.distribution.local.store.put(arrayObjs, {key:"mapPhaseMap", gid: gid}, (e,v)=>{
+                global.distribution.local.store.put(mapObjs, {key:"mapPhaseMap", gid: gid}, (e,v)=>{
                   cb(null,v)
                 })
               }
@@ -26,16 +28,47 @@ const mr = function(config) {
         
       const shufflePhase = function(obj, config, gid, serviceName, cb) {
         global.distribution.local.store.get({key:"mapPhaseMap", gid: gid}, (e,v)=>{
-          
-          const foundPairs = new Map();
-          v.forEach((tempObject)=>{
-            let foundKeys = Object.keys(tempObject)[0]
-            if(!foundPairs.has(foundKeys)){
-              foundPairs.set(foundKeys,[])
-            }
-            foundPairs.get(foundKeys).push(tempObject[foundKeys]);
+          console.log("JOSUE "+global.distribution.util.serialize(v))
 
-          })
+          const foundPairs = new Map();
+          for (let key in v) {
+            if (v.hasOwnProperty(key)) {
+
+              if (Array.isArray(v[key])) {
+              for (let i = 0; i < v[key].length; i++) {
+                //const temp = Object.keys(v[key][i]);
+                const word = Object.keys(v[key][i])[0]
+                //console.log(v[key][i][word])
+                const count =v[key][i][word]
+                //console.log(word)
+                //const count = v[key][i].value[word].value
+                if(!foundPairs.has(word)){
+                foundPairs.set(word,[])
+                }
+                foundPairs.get(word).push(count);
+              }
+            }
+            else{
+              const mykey = Object.keys(v[key])[0]
+              const myValue =v[key][mykey]
+              if(!foundPairs.has(mykey)){
+                foundPairs.set(mykey,[])
+                }
+                foundPairs.get(mykey).push(myValue);
+
+            }
+          }
+        }
+        console.log(foundPairs)
+          // v.forEach((tempObject)=>{
+          //   console.log("MADE IT IN HERE")
+          //   let foundKeys = Object.keys(tempObject)[0]
+          //   if(!foundPairs.has(foundKeys)){
+          //     foundPairs.set(foundKeys,[])
+          //   }
+          //   foundPairs.get(foundKeys).push(tempObject[foundKeys]);
+
+          // })
           let numGroupPairs = foundPairs.size;
           let counter = 0;
 
@@ -109,6 +142,7 @@ const mr = function(config) {
               global.distribution[context.gid].comm.send([keyGetterObj, configuration, context.gid, serviceName], remote, (e, v) => {
 
                 const result = Object.values(v).reduce((acc, val) => acc.concat(val), []);
+                console.log(result)
                 callback(null, result);
                 local.mr_routes.deregister(serviceName, (e, v) => {
                 remote = {service: 'mr_routes', method: 'deregister'};
