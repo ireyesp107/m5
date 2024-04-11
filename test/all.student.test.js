@@ -1,4 +1,6 @@
 global.nodeConfig = {ip: '127.0.0.1', port: 7070};
+const {performance} = require('perf_hooks');
+
 const distribution = require('../distribution');
 const id = distribution.util.id;
 
@@ -187,6 +189,8 @@ test('Appending same and different keys Mem', (done) => {
   });
 });
 test('first mr test with mem parameter with multiple objects', (done) => {
+  let start; let end;
+
   let m2 = (key, value) => {
     // map each word to a key-value pair like {word: 1}
     let words = value.split(/(\s+)/).filter((e) => e !== ' ');
@@ -239,8 +243,11 @@ test('first mr test with mem parameter with multiple objects', (done) => {
         done(e);
       }
 
+      start = performance.now();
       distribution.dlib.mr.exec({keys: v, map: m2, reduce: r2, memory: true},
           (e, v) => {
+            end = performance.now();
+            console.log(end-start);
             try {
               expect(v).toEqual(expect.arrayContaining(expected));
               done();
@@ -267,6 +274,8 @@ test('first mr test with mem parameter with multiple objects', (done) => {
   });
 });
 test('first mr test with mem argument', (done) => {
+  let start;
+  let end;
   let m1 = (key, value) => {
     let words = value.split(/(\s+)/).filter((e) => e !== ' ');
     console.log(words);
@@ -303,15 +312,18 @@ test('first mr test with mem argument', (done) => {
         done(e);
       }
 
-
-      distribution.ncdc.mr.exec({keys: v, map: m1, reduce: r1}, (e, v) => {
-        try {
-          expect(v).toEqual(expect.arrayContaining(expected));
-          done();
-        } catch (e) {
-          done(e);
-        }
-      });
+      start=performance.now();
+      distribution.ncdc.mr.exec({keys: v, map: m1, reduce: r1, memory: true},
+          (e, v) => {
+            end = performance.now();
+            console.log(end-start);
+            try {
+              expect(v).toEqual(expect.arrayContaining(expected));
+              done();
+            } catch (e) {
+              done(e);
+            }
+          });
     });
   };
 

@@ -16,10 +16,14 @@ My implementation comprises `2` new software components, totaling `376` added li
 My code passed the gradescope tests. Additionally for my store.append method I wrote tests to ensure 2 objects with the same keys would be appended on the same file. This was performed by calling append in the same key and performing a store.get on the key. I additionally tested that two different keys wouldn't append to the same file by using the same process previously mentioed. I then tested 2 tests cases for my mem.append to ensure the I was appending to the correct file. Lastly I have 2 test cases that mimics to same tests that were done for store, but instead I manually input memory:true to the configuration.
 
 *Performance*:
-
+I tested the performance between using store and mem in exec utilizing the test suite in mr.test.js
+           |  meme  |  store  |
+all.mr:ncdc| 47.4042| 70.5906 |
+________________________________
+all.mr:dlib| 82.0001| 203.1130|
 ## Key Feature
 > Which extra features did you implement and how?
--I implemented the In-memory operation by handling an extra paramter in configuration called memory. During the map phase I would perform store.get because it is necessary to read the initial information on nodes. However, after the inital store.get I create a variable called storeOrMem that changes based on if the configuration includes a memory paramter and the value is true. I would use this variable instead .store -> [storeOrMem]. Then I implemented the append function in mem which handles the same functionality in store.append.
+-I implemented the In-memory operation by handling an extra paramter in configuration called memory. During the map phase I would perform store.get because it is necessary to read the initial information on nodes. However, after the inital store.get I create a variable called storeOrMem that changes based on if the configuration includes a memory paramter and the value is true. I would use this variable instead .store -> [storeOrMem]. Then I implemented the append function in mem which handles the same functionality in store.append. 
 
 ## Time to Complete
 > Roughly, how many hours did this milestone take you to complete?
