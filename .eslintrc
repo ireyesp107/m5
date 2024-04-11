@@ -27,6 +27,5 @@
                 "message": "Class expressions are not allowed."
             }
         ],
-        "max-len":[1,120]
     }
 }

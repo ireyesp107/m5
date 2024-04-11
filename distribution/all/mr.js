@@ -39,7 +39,8 @@ const mr = function(config) {
         if (Object.keys(config).includes('memory') && config['memory']) {
           storeOrMem = 'mem';
         };
-        global.distribution.local[storeOrMem].get({key: 'mapPhaseMap', gid: gid},
+        global.distribution.local[storeOrMem].get(
+            {key: 'mapPhaseMap', gid: gid},
             (e, v)=>{
               const foundPairs = new Map();
               for (let key in v) {
@@ -70,8 +71,8 @@ const mr = function(config) {
               for (const groupKey of foundPairs.keys()) {
                 let currentGroup = foundPairs.get(groupKey);
                 let newGroupKey = groupKey+serviceName;
-                global.distribution[gid][storeOrMem].append(currentGroup, newGroupKey,
-                    (e, v) =>{
+                global.distribution[gid][storeOrMem].append(currentGroup,
+                    newGroupKey, (e, v) =>{
                       counter +=1;
                       if (counter === numGroupPairs) {
                         cb(null, v);
@@ -87,30 +88,33 @@ const mr = function(config) {
         if (Object.keys(config).includes('memory') && config['memory']) {
           storeOrMem = 'mem';
         };
-        global.distribution.local[storeOrMem].get({key: null, gid: gid}, (e, v) =>{
-          const keysInPossession = [];
-          for (let key of v) {
-            if (key.endsWith(serviceName)) {
-              keysInPossession.push(key);
-            }
-          }
-          const reducePairs =[];
-          if (keysInPossession.length>0) {
-            keysInPossession.forEach((foundKey)=>{
-              global.distribution.local[storeOrMem].get({key: foundKey, gid: gid},
-                  (e, values) =>{
-                    reducePairs.push(
-                        config.reduce(foundKey.slice(0, -serviceName.length),
+        global.distribution.local[storeOrMem].get(
+            {key: null, gid: gid}, (e, v) =>{
+              const keysInPossession = [];
+              for (let key of v) {
+                if (key.endsWith(serviceName)) {
+                  keysInPossession.push(key);
+                }
+              }
+              const reducePairs =[];
+              if (keysInPossession.length>0) {
+                keysInPossession.forEach((foundKey)=>{
+                  global.distribution.local[storeOrMem].get(
+                      {key: foundKey, gid: gid},
+                      (e, values) =>{
+                        reducePairs.push(
+                            config.reduce(foundKey.slice(0,
+                                -serviceName.length),
                             values));
-                    if (reducePairs.length === keysInPossession.length) {
-                      cb(null, reducePairs);
-                    }
-                  });
+                        if (reducePairs.length === keysInPossession.length) {
+                          cb(null, reducePairs);
+                        }
+                      });
+                });
+              } else {
+                cb(null, keysInPossession);
+              }
             });
-          } else {
-            cb(null, keysInPossession);
-          }
-        });
       };
       const deregisterFunc = function(serviceName) {
         local.mr_routes.deregister(serviceName,
@@ -161,14 +165,15 @@ const mr = function(config) {
                         remote, (e, v) => {
                         // reduce phase
                           remote.method = 'reducePhase';
-                          global.distribution[context.gid].comm.send([keyObj, configuration, context.gid,
-                            serviceName], remote, (e, v) => {
-                            const result = Object.values(v).reduce(
-                                (acc, val) => acc.concat(val), []);
-                            console.log(result);
-                            callback(null, result);
-                            deregisterFunc(serviceName);
-                          });
+                          global.distribution[context.gid].comm.send(
+                              [keyObj, configuration, context.gid,
+                                serviceName], remote, (e, v) => {
+                                const result = Object.values(v).reduce(
+                                    (acc, val) => acc.concat(val), []);
+                                console.log(result);
+                                callback(null, result);
+                                deregisterFunc(serviceName);
+                              });
                         });
                       });
                 });
