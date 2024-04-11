@@ -101,7 +101,6 @@ test('Appending Different Keys', (done) => {
       distribution.local.store.get(key2, (e, v) => {
         expect(v).toEqual(user2);
         done();
-
       });
     });
   });

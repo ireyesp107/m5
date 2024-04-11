@@ -13,14 +13,19 @@ const mr = function(config) {
               const keysLength = storeKeys.length;
               let arrayObjs = [];
               let mapObjs = new Map();
+              let storeOrMem = 'store';
+              if (Object.keys(config).includes('memory') && config['memory']) {
+                storeOrMem = 'mem';
+              };
               storeKeys.forEach((localKey) => {
                 global.distribution.local.store.get({key: localKey, gid: gid},
                     (e, localValue) =>{
                       mapObjs[localKey]=config.map(localKey, localValue);
                       arrayObjs.push(config.map(localKey, localValue));
                       if (keysLength === arrayObjs.length) {
-                        global.distribution.local.store.put(mapObjs,
+                        global.distribution.local[storeOrMem].put(mapObjs,
                             {key: 'mapPhaseMap', gid: gid}, (e, v)=>{
+                              console.log('CHAYITO');
                               cb(null, v);
                             });
                       }
@@ -30,7 +35,11 @@ const mr = function(config) {
       };
 
       const shufflePhase = function(obj, config, gid, serviceName, cb) {
-        global.distribution.local.store.get({key: 'mapPhaseMap', gid: gid},
+        let storeOrMem = 'store';
+        if (Object.keys(config).includes('memory') && config['memory']) {
+          storeOrMem = 'mem';
+        };
+        global.distribution.local[storeOrMem].get({key: 'mapPhaseMap', gid: gid},
             (e, v)=>{
               const foundPairs = new Map();
               for (let key in v) {
@@ -61,7 +70,7 @@ const mr = function(config) {
               for (const groupKey of foundPairs.keys()) {
                 let currentGroup = foundPairs.get(groupKey);
                 let newGroupKey = groupKey+serviceName;
-                global.distribution[gid].store.append(currentGroup, newGroupKey,
+                global.distribution[gid][storeOrMem].append(currentGroup, newGroupKey,
                     (e, v) =>{
                       counter +=1;
                       if (counter === numGroupPairs) {
@@ -74,7 +83,11 @@ const mr = function(config) {
 
       // reduce phase
       const reducePhase = function(obj, config, gid, serviceName, cb) {
-        global.distribution.local.store.get({key: null, gid: gid}, (e, v) =>{
+        let storeOrMem = 'store';
+        if (Object.keys(config).includes('memory') && config['memory']) {
+          storeOrMem = 'mem';
+        };
+        global.distribution.local[storeOrMem].get({key: null, gid: gid}, (e, v) =>{
           const keysInPossession = [];
           for (let key of v) {
             if (key.endsWith(serviceName)) {
@@ -84,7 +97,7 @@ const mr = function(config) {
           const reducePairs =[];
           if (keysInPossession.length>0) {
             keysInPossession.forEach((foundKey)=>{
-              global.distribution.local.store.get({key: foundKey, gid: gid},
+              global.distribution.local[storeOrMem].get({key: foundKey, gid: gid},
                   (e, values) =>{
                     reducePairs.push(
                         config.reduce(foundKey.slice(0, -serviceName.length),
@@ -115,6 +128,7 @@ const mr = function(config) {
       let serviceName = 'mr-'+utils.id.getID(configuration).substring(0, 10);
       // configuration.serviceName = serviceName
 
+      configuration.memory = true;
       let endpointService = {'mapPhase': mapPhase,
         'shufflePhase': shufflePhase,
         'reducePhase': reducePhase};
@@ -127,6 +141,8 @@ const mr = function(config) {
       // add mr_routes to whole node group
       let remote = {service: 'routes', method: 'put'};
       let mrRoutes = global.distribution.local.mr_routes;
+
+
       global.distribution[context.gid].comm.send([mrRoutes, 'mr_routes'],
           remote, (e, v) => {
             remote = {service: 'mr_routes', method: 'register'};
@@ -145,15 +161,14 @@ const mr = function(config) {
                         remote, (e, v) => {
                         // reduce phase
                           remote.method = 'reducePhase';
-                          global.distribution[context.gid].comm.send(
-                              [keyObj, configuration, context.gid,
-                                serviceName], remote, (e, v) => {
-                                const result = Object.values(v).reduce(
-                                    (acc, val) =>
-                                      acc.concat(val), []);
-                                callback(null, result);
-                                deregisterFunc(serviceName);
-                              });
+                          global.distribution[context.gid].comm.send([keyObj, configuration, context.gid,
+                            serviceName], remote, (e, v) => {
+                            const result = Object.values(v).reduce(
+                                (acc, val) => acc.concat(val), []);
+                            console.log(result);
+                            callback(null, result);
+                            deregisterFunc(serviceName);
+                          });
                         });
                       });
                 });
