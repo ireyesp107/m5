@@ -25,7 +25,6 @@ const mr = function(config) {
                       if (keysLength === arrayObjs.length) {
                         global.distribution.local[storeOrMem].put(mapObjs,
                             {key: 'mapPhaseMap', gid: gid}, (e, v)=>{
-                              console.log('CHAYITO');
                               cb(null, v);
                             });
                       }
@@ -130,9 +129,8 @@ const mr = function(config) {
 
 
       let serviceName = 'mr-'+utils.id.getID(configuration).substring(0, 10);
-      // configuration.serviceName = serviceName
 
-      configuration.memory = true;
+      // configuration.memory = true;
       let endpointService = {'mapPhase': mapPhase,
         'shufflePhase': shufflePhase,
         'reducePhase': reducePhase};
@@ -170,7 +168,6 @@ const mr = function(config) {
                                 serviceName], remote, (e, v) => {
                                 const result = Object.values(v).reduce(
                                     (acc, val) => acc.concat(val), []);
-                                console.log(result);
                                 callback(null, result);
                                 deregisterFunc(serviceName);
                               });
