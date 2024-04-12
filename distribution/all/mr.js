@@ -7,22 +7,22 @@ const mr = function(config) {
 
   return {
     exec: (configuration, callback) => {
-      const mapPhase = function(obj, config, gid, serviceName, cb) {
+      const mapPhase = function(config, gid, cb) {
         global.distribution.local.store.get({key: null, gid: gid},
             (e, storeKeys) => {
               const keysLength = storeKeys.length;
-              let arrayObjs = [];
               let mapObjs = new Map();
               let storeOrMem = 'store';
+              let currentIndex=0;
               if (Object.keys(config).includes('memory') && config['memory']) {
                 storeOrMem = 'mem';
               };
               storeKeys.forEach((localKey) => {
                 global.distribution.local.store.get({key: localKey, gid: gid},
                     (e, localValue) =>{
+                      currentIndex+=1;
                       mapObjs[localKey]=config.map(localKey, localValue);
-                      arrayObjs.push(config.map(localKey, localValue));
-                      if (keysLength === arrayObjs.length) {
+                      if (keysLength === currentIndex) {
                         global.distribution.local[storeOrMem].put(mapObjs,
                             {key: 'mapPhaseMap', gid: gid}, (e, v)=>{
                               cb(null, v);
@@ -33,7 +33,7 @@ const mr = function(config) {
             });
       };
 
-      const shufflePhase = function(obj, config, gid, serviceName, cb) {
+      const shufflePhase = function(config, gid, serviceName, cb) {
         let storeOrMem = 'store';
         if (Object.keys(config).includes('memory') && config['memory']) {
           storeOrMem = 'mem';
@@ -82,7 +82,7 @@ const mr = function(config) {
       };
 
       // reduce phase
-      const reducePhase = function(obj, config, gid, serviceName, cb) {
+      const reducePhase = function(config, gid, serviceName, cb) {
         let storeOrMem = 'store';
         if (Object.keys(config).includes('memory') && config['memory']) {
           storeOrMem = 'mem';
@@ -151,20 +151,19 @@ const mr = function(config) {
             global.distribution[context.gid].comm.send(
                 [endpointService, serviceName], remote, (e, v) => {
                 // map phase
-                  let keyObj = {key: null, gid: context.gid};
                   remote = {'service': serviceName, 'method': 'mapPhase'};
                   global.distribution[context.gid].comm.send(
-                      [keyObj, configuration, context.gid, serviceName],
+                      [configuration, context.gid],
                       remote, (e, v) => {
                       // shuffle phase
                         remote.method = 'shufflePhase';
-                        global.distribution[context.gid].comm.send([keyObj,
+                        global.distribution[context.gid].comm.send([
                           configuration, context.gid, serviceName],
                         remote, (e, v) => {
                         // reduce phase
                           remote.method = 'reducePhase';
                           global.distribution[context.gid].comm.send(
-                              [keyObj, configuration, context.gid,
+                              [configuration, context.gid,
                                 serviceName], remote, (e, v) => {
                                 const result = Object.values(v).reduce(
                                     (acc, val) => acc.concat(val), []);

@@ -2,6 +2,7 @@
 
 const util = require('./distribution/util/util.js');
 const args = require('yargs').argv;
+const {convert} = require('html-to-text');
 
 // Default configuration
 global.nodeConfig = global.nodeConfig || {
@@ -60,7 +61,7 @@ distribution['all'].mem =
 distribution['all'].store =
     require('./distribution/all/store')({gid: 'all'});
 
-module.exports = global.distribution;
+module.exports = global.distribution, convert;
 
 /* The following code is run when distribution.js is run directly */
 if (require.main === module) {

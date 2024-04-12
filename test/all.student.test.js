@@ -1,6 +1,6 @@
 global.nodeConfig = {ip: '127.0.0.1', port: 7070};
 const {performance} = require('perf_hooks');
-
+global.fetch = require('node-fetch');
 const distribution = require('../distribution');
 const id = distribution.util.id;
 
@@ -244,7 +244,7 @@ test('first mr test with mem parameter with multiple objects', (done) => {
       }
 
       start = performance.now();
-      distribution.dlib.mr.exec({keys: v, map: m2, reduce: r2, memory: true},
+      distribution.dlib.mr.exec({keys: v, map: m2, reduce: r2, memory: false},
           (e, v) => {
             end = performance.now();
             console.log(end-start);
@@ -273,6 +273,7 @@ test('first mr test with mem parameter with multiple objects', (done) => {
     });
   });
 });
+
 test('first mr test with mem argument', (done) => {
   let start;
   let end;
