@@ -60,7 +60,7 @@ distribution['all'].mem =
 distribution['all'].store =
     require('./distribution/all/store')({gid: 'all'});
 
-module.exports = global.distribution, convert;
+module.exports = global.distribution;
 
 /* The following code is run when distribution.js is run directly */
 if (require.main === module) {
