@@ -2,7 +2,6 @@
 
 const util = require('./distribution/util/util.js');
 const args = require('yargs').argv;
-const {convert} = require('html-to-text');
 
 // Default configuration
 global.nodeConfig = global.nodeConfig || {

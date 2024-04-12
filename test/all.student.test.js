@@ -1,6 +1,5 @@
 global.nodeConfig = {ip: '127.0.0.1', port: 7070};
 const {performance} = require('perf_hooks');
-global.fetch = require('node-fetch');
 const distribution = require('../distribution');
 const id = distribution.util.id;
 
