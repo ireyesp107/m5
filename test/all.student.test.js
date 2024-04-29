@@ -1,5 +1,6 @@
 global.nodeConfig = {ip: '127.0.0.1', port: 7070};
 const {performance} = require('perf_hooks');
+global.fetch = require('node-fetch');
 const distribution = require('../distribution');
 const id = distribution.util.id;
 
@@ -243,7 +244,7 @@ test('first mr test with mem parameter with multiple objects', (done) => {
       }
 
       start = performance.now();
-      distribution.dlib.mr.exec({keys: v, map: m2, reduce: r2, memory: false},
+      distribution.dlib.mr.exec({keys: v, map: m2, reduce: r2, memory: true},
           (e, v) => {
             end = performance.now();
             console.log(end-start);
@@ -273,6 +274,94 @@ test('first mr test with mem parameter with multiple objects', (done) => {
   });
 });
 
+test('(0 pts) crawler', (done) => {
+  let mCrawler = async (key, value) => {
+    let out = {};
+    const webResponse = await global.fetch(value);
+    let webText = await webResponse.text();
+    webText = global.distribution.convert(webText);
+    out[value] = webText;
+    return out;
+  };
+
+  let rCrawler = (key, value) => {
+    let out = {};
+    out[key] = value[0];
+    return out;
+  };
+
+  let dataset = [
+    {'ck1': 'https://crawler-test.com/titles/page_title_length/2'},
+    {'ck2': 'https://crawler-test.com/links/repeated_external_links'},
+  ];
+
+  /* eslint-disable */
+  let expected = [
+  {'https://crawler-test.com/titles/page_title_length/2' : 
+  `Crawler Test two point oh! [/]
+  
+  
+  
+  XX
+  
+  
+  bSUOIVRoWE9KKfItrnfw
+  
+  --------------------------------------------------------------------------------\n
+  `},
+  {'https://crawler-test.com/links/repeated_external_links': 
+  `Crawler Test two point oh! [/]
+  
+  
+  
+  REPEATED EXTERNAL LINKS
+  
+  Same anchor text [http://deepcrawl.com/]
+  Same anchor text [http://deepcrawl.com/]
+  Different anchor text [http://deepcrawl.com/]
+  
+  dxsC6Mbby6iY5rn/3uPB
+  
+  --------------------------------------------------------------------------------\n
+  `},
+];/* eslint-enable */
+
+  const doMapReduce = (cb) => {
+    distribution.ncdc.store.get(null, (e, v) => {
+      try {
+        expect(v.length).toBe(dataset.length);
+      } catch (e) {
+        done(e);
+      }
+
+      distribution.ncdc.mr.exec({keys: v, map: mCrawler,
+        reduce: rCrawler, memory: false},
+      (e, v) => {
+        try {
+          expect(v).toEqual(expect.arrayContaining(expected));
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
+    });
+  };
+
+  let cntr = 0;
+
+  // We send the dataset to the cluster
+  dataset.forEach((o) => {
+    let key = Object.keys(o)[0];
+    let value = o[key];
+    distribution.ncdc.store.put(value, key, (e, v) => {
+      cntr++;
+      // Once we are done, run the map reduce
+      if (cntr === dataset.length) {
+        doMapReduce();
+      }
+    });
+  });
+});
 test('first mr test with mem argument', (done) => {
   let start;
   let end;
